@@ -2,7 +2,7 @@
 
 Module.register("MMM-StopwatchTimer", {
 defaults: {
-	animation: true
+	animation: false
 },
 
 getStyles: function() {
@@ -19,47 +19,32 @@ notificationReceived: function(notification, payload, sender) {
     case "START_TIMER":
 		this.minutes = Math.floor(payload / 60);
 		this.seconds = (payload % 60);
-		this.initialiseStopwatchTimer(true);
+		this.initialiseTimer();
 		break
-	case "INTERRUPT_STOPWATCHTIMER":
+	case "STOP_TIMER":
 		this.minutes = -1;
 		this.seconds = -1;
-		clearInterval(this.stopwatchTimer);
+		clearInterval(this.Timer);
 		this.removeOverlay();
 	  	break
-	case "PAUSE_STOPWATCHTIMER":
-		clearInterval(this.stopwatchTimer);
+	case "PAUSE_TIMER":
+		clearInterval(this.Timer);
 		break
 	case "UNPAUSE_TIMER":
 		if(this.minutes > -1 && this.seconds > -1) {
-			this.initialiseStopwatchTimer(true);
+			this.initialiseTimer();
 		}
 		break
-	case "START_STOPWATCH":
-		this.minutes = 0;
-		this.seconds = 0;
-		this.initialiseStopwatchTimer(false);
-		break
-	case "UNPAUSE_STOPWATCH":
-		if(this.minutes > -1 && this.seconds > -1) {
-			this.initialiseStopwatchTimer(false);
-		}
   }
 },
 
-initialiseStopwatchTimer: function(isCounter){
-	clearInterval(this.stopwatchTimer);
+initialiseTimer: function(){
+	clearInterval(this.Timer);
 	if(this.isVisible) {
     	this.removeOverlay();
     }
     this.createOverlay();
-    this.stopwatchTimer = setInterval(()=>{
-	if(isCounter) {
-	  	this.createTimer()
-	} else {
-		this.createStopwatch()
-	}
-  	}, 1000)
+    this.Timer = setInterval(()=>{this.createTimer()}, 1000)
 },
 
 createOverlay: function() {
@@ -79,14 +64,6 @@ removeOverlay: function() {
 	this.firstMessage = true;
 },
 
-displayMessagePopup: function(message) {
-  let strinner = '<div class="ns-box-inner">';
-  strinner += "<span class='regular normal medium'>" + message + "</span>";
-  strinner += "</div>";
-  this.ntf.innerHTML = strinner;
-  this.ntf.className = "ns-alert ns-growl ns-effect-jelly ns-type-notice ns-show"
-  document.body.insertBefore(this.ntf, document.body.nextSibling);
-},
 
 displayMessageNoPopup: function(message) {
   let strinner = '<div class="ns-box-inner">';
@@ -109,38 +86,13 @@ createTimer: function() {
 			}, 3000);
 		}
 		if(this.minutes > 0 || this.seconds > 0) {
-			if(this.config.animation) {
-				if(this.seconds < 10) {
-					this.displayMessagePopup(this.minutes + ':0' + this.seconds);
-				} else {
-					this.displayMessagePopup(this.minutes + ':' + this.seconds);
-				}
-			} else {	
-				if(this.seconds < 10) {
-					this.displayMessageNoPopup(this.minutes + ':0' + this.seconds);
-				} else {
-					this.displayMessageNoPopup(this.minutes + ':' + this.seconds);
-				}
+			if(this.seconds < 10) {
+				this.displayMessageNoPopup(this.minutes + ':0' + this.seconds);
+			} else {
+				this.displayMessageNoPopup(this.minutes + ':' + this.seconds);
 			}
 			this.decreaseTime();
 		}
-},
-
-createStopwatch: function() {
-	if(this.config.animation) {
-		if(this.seconds < 10) {
-			this.displayMessagePopup(this.minutes + ':0' + this.seconds);
-		} else {
-			this.displayMessagePopup(this.minutes + ':' + this.seconds);
-		}
-	} else {
-			if(this.seconds < 10) {
-			this.displayMessageNoPopup(this.minutes + ':0' + this.seconds);
-		} else {
-			this.displayMessageNoPopup(this.minutes + ':' + this.seconds);
-		}
-	}
-	this.increaseTime();
 },
 
 decreaseTime: function() {
